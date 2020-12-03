@@ -26,17 +26,14 @@
 
 {#- Select hashing algorithm -#}
 {%- if hash == 'MD5' -%}
-    {%- set hash_alg = 'MD5_BINARY' -%}
-    {%- set hash_size = 16 -%}
+    {%- set hash_alg = 'MD5' -%}
 {%- elif hash == 'SHA' -%}
-    {%- set hash_alg = 'SHA2_BINARY' -%}
-    {%- set hash_size = 32 -%}
+    {%- set hash_alg = 'SHA1' -%}
 {%- else -%}
-    {%- set hash_alg = 'MD5_BINARY' -%}
-    {%- set hash_size = 16 -%}
+    {%- set hash_alg = 'MD5' -%}
 {%- endif -%}
 
-{%- set standardise = "NULLIF(UPPER(TRIM(CAST([EXPRESSION] AS VARCHAR))), '')" %}
+{%- set standardise = "NULLIF(UPPER(TRIM(CAST([EXPRESSION] AS STRING))), '')" %}
 
 {#- Alpha sort columns before hashing if a hashdiff -#}
 {%- if is_hashdiff and columns is iterable and columns is not string -%}
@@ -46,12 +43,12 @@
 {#- If single column to hash -#}
 {%- if columns is string -%}
     {%- set column_str = dbtvault.as_constant(columns) -%}
-    CAST(({{ hash_alg }}({{ standardise | replace('[EXPRESSION]', column_str) }})) AS BINARY({{ hash_size }})) AS {{ alias }}
+    {{ hash_alg }}({{ standardise | replace('[EXPRESSION]', column_str) }}) AS {{ alias }}
 
 {#- Else a list of columns to hash -#}
 {%- else -%}
 
-CAST({{ hash_alg }}(CONCAT(
+{{ hash_alg }}(CONCAT(
 
 {%- for column in columns %}
 
@@ -61,11 +58,10 @@ CAST({{ hash_alg }}(CONCAT(
     IFNULL({{ standardise | replace('[EXPRESSION]', column_str) }}, '^^'), '||',
 {%- else %}
     IFNULL({{ standardise | replace('[EXPRESSION]', column_str) }}, '^^') ))
-AS BINARY({{ hash_size }})) AS {{ alias }}
+AS {{ alias }}
 {%- endif -%}
 
 {%- endfor -%}
 {%- endif -%}
 
 {%- endmacro -%}
-
